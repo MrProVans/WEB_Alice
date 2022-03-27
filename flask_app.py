@@ -7,6 +7,8 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 
 sessionStorage = {}
+list_of_animals = ['Слона', 'Кролика']
+i = 0
 
 
 @app.route('/post', methods=['POST'])
@@ -29,6 +31,7 @@ def main():
 
 
 def handle_dialog(req, res):
+    global i
     user_id = req['session']['user_id']
 
     if req['session']['new']:
@@ -42,7 +45,7 @@ def handle_dialog(req, res):
             ]
         }
 
-        res['response']['text'] = 'Привет! Купи слона!'
+        res['response']['text'] = f'Привет! Купи {list_of_animals[i].lower()}!'
 
         res['response']['buttons'] = get_suggests(user_id)
         return
@@ -56,12 +59,25 @@ def handle_dialog(req, res):
         'я куплю'
     ]:
 
-        res['response']['text'] = 'Слона можно найти на Яндекс.Маркете!'
-        res['response']['end_session'] = True
+        res['response']['text'] = f'{list_of_animals[i]} можно найти на Яндекс.Маркете!'
+        if i == 0:
+            i += 1
+            res['response']['text'] = f'Привет! Купи {list_of_animals[i].lower()}!'
+            sessionStorage[user_id] = {
+                'suggests': [
+                    "Не хочу.",
+                    "Не буду.",
+                    'Делать мне нечего!',
+                    "Отстань!",
+                ]
+            }
+            res['response']['buttons'] = get_suggests(user_id)
+        else:
+            res['response']['end_session'] = True
         return
 
     res['response']['text'] = \
-        f"Все говорят '{req['request']['original_utterance']}', а ты купи слона!"
+        f"Все говорят '{req['request']['original_utterance']}', а ты купи {list_of_animals[i].lower()}!"
     res['response']['buttons'] = get_suggests(user_id)
 
 
@@ -79,12 +95,12 @@ def get_suggests(user_id):
     if len(suggests) < 2:
         suggests.append({
             "title": "Ладно",
-            "url": "https://market.yandex.ru/search?text=слон",
+            "url": f"https://market.yandex.ru/search?text={list_of_animals[i][:-1]}",
             "hide": True
         })
         suggests.append({
             "title": "Я покупаю",
-            "url": "https://market.yandex.ru/search?text=слон",
+            "url": f"https://market.yandex.ru/search?text={list_of_animals[i][:-1]}",
             "hide": True
         })
 
